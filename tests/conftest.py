@@ -1,7 +1,7 @@
 import asyncio
 
 import pytest
-from django.test.client import AsyncClient, AsyncRequestFactory
+from django.test.client import AsyncClient
 
 
 @pytest.fixture(scope="session")
@@ -12,12 +12,5 @@ def test_event_loop():
 
 
 @pytest.fixture(scope="session")
-def test_client() -> AsyncClient:
-    with AsyncClient() as client:
-        yield client
-
-
-@pytest.fixture(scope="session")
-async def async_req_fac() -> AsyncRequestFactory:
-    async with AsyncRequestFactory() as client:
-        yield client
+def client() -> AsyncClient:
+    yield AsyncClient()
