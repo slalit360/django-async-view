@@ -17,12 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from hello_async.views import index, async_view, sync_view, translate
+from hello_async.views import index, async_view, sync_view, myapi, myapi_io
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("async/", async_view, name='async'),
     path("sync/", sync_view, name='sync'),
-    path("myapi/", translate, name="myapi"),
+    path("myapi/", myapi, name="myapi"),
+    path("myapi_io/", myapi_io, name="myapi_io"),
     path("", index, name='health'),
 ]

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from asyncio import Future
 from time import sleep
 
 import httpx
@@ -68,12 +69,12 @@ async def async_helper():
 
 
 # custom done callback function
-def callback(task):
+def callback_1(tasks: Future):
     # report a message
-    print('Task is done')
+    logger.info(f'Task is done, {tasks.done()}, {tasks._state}')
 
 
-async def translate(request: ASGIRequest):
+async def myapi(request: ASGIRequest):
     logger.info(req_id)
     loop = asyncio.get_event_loop()  # each thread got its own event loop
     if request.method in {'GET', 'POST'}:
@@ -82,7 +83,32 @@ async def translate(request: ASGIRequest):
         # await loop.create_task(async_helper_converted())
         #       OR
         task = loop.create_task(async_helper())
-        task.add_done_callback(callback)
+        task.add_done_callback(callback_1)
+        return HttpResponse(f"{request.method.upper()} -> Health is okay")
+
+    return HttpResponse("status=500")
+
+
+def callback_2(tasks: Future):
+    # report a message
+    for r in tasks.result():
+        print(r.status_code)
+    logger.info(f'Task is done, {tasks.done()}, {tasks._state}')
+
+
+async def get_async(url):
+    async with httpx.AsyncClient() as client:
+        return await client.get(url)
+
+
+urls = ["https://httpbin.org/status/200", "https://httpbin.org/get"]
+
+
+async def myapi_io(request: ASGIRequest):
+    logger.info(req_id)
+    if request.method in {'GET', 'POST'}:
+        resps: Future = asyncio.gather(*map(get_async, urls))
+        print(resps.add_done_callback(callback_2))
         return HttpResponse(f"{request.method.upper()} -> Health is okay")
 
     return HttpResponse("status=500")
