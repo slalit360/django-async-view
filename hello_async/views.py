@@ -8,21 +8,19 @@ from django.core.handlers.asgi import ASGIRequest
 from django.http import HttpResponse
 
 logger = logging.getLogger()
-from request_id import generate_request_id
 
-req_id = generate_request_id()
+urls = ["https://httpbin.org/status/200", "https://httpbin.org/get"]
 
 
 # helpers
 
-async def http_call_async():
+async def http_call_async(url):
     for num in range(1, 6):
         await asyncio.sleep(1)
-        print(num)
+        print(f"{url} -> ", num)
     async with httpx.AsyncClient() as client:
-        r = await client.get("https://httpbin.org/")
-        print(r)
-        # print(r.status_code)
+        r = await client.get(url)
+        print(f"{url} -> ", r)
 
 
 def http_call_sync():
@@ -36,13 +34,12 @@ def http_call_sync():
 # views
 
 async def index(request):
-    logger.info(req_id)
     return HttpResponse("Hello, async Django!")
 
 
 async def async_view(request):
     loop = asyncio.get_event_loop()
-    loop.create_task(http_call_async())
+    loop.create_task(http_call_async(urls[0]))
     return HttpResponse("Non-blocking HTTP request")
 
 
@@ -61,21 +58,20 @@ def sync_helper():
 
 
 async def async_helper():
-    print("In helper coroutine!")
+    logger.info("In myapi helper coroutine!")
     for num in range(1, 6):
         await asyncio.sleep(1)
-        print(num)
-    print("Exiting coroutine!")
+        logger.info(num)
+    logger.info("Exiting myapi coroutine!")
 
 
 # custom done callback function
-def callback_1(tasks: Future):
-    # report a message
-    logger.info(f'Task is done, {tasks.done()}, {tasks._state}')
+def callback_myapi(tasks: Future):
+    logger.info(f'API Callback -> Task is {tasks._state}')
 
 
 async def myapi(request: ASGIRequest):
-    logger.info(req_id)
+    logger.info("In MyAPI")
     loop = asyncio.get_event_loop()  # each thread got its own event loop
     if request.method in {'GET', 'POST'}:
         # HELP: below script is to convert sync to sync
@@ -83,32 +79,22 @@ async def myapi(request: ASGIRequest):
         # await loop.create_task(async_helper_converted())
         #       OR
         task = loop.create_task(async_helper())
-        task.add_done_callback(callback_1)
+        task.add_done_callback(callback_myapi)
         return HttpResponse(f"{request.method.upper()} -> Health is okay")
 
     return HttpResponse("status=500")
 
 
-def callback_2(tasks: Future):
-    # report a message
-    for r in tasks.result():
-        print(r.status_code)
-    logger.info(f'Task is done, {tasks.done()}, {tasks._state}')
-
-
-async def get_async(url):
-    async with httpx.AsyncClient() as client:
-        return await client.get(url)
-
-
-urls = ["https://httpbin.org/status/200", "https://httpbin.org/get"]
+def callback_http(tasks: Future):
+    logger.info(tasks)
+    logger.info(f'HTTP Callback -> Task is {tasks._state}')
 
 
 async def myapi_io(request: ASGIRequest):
-    logger.info(req_id)
+    logger.info("In HTTP Api")
     if request.method in {'GET', 'POST'}:
-        resps: Future = asyncio.gather(*map(get_async, urls))
-        print(resps.add_done_callback(callback_2))
+        resps: Future = asyncio.gather(*map(http_call_async, urls))
+        print(resps.add_done_callback(callback_http))
         return HttpResponse(f"{request.method.upper()} -> Health is okay")
 
     return HttpResponse("status=500")

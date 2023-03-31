@@ -24,6 +24,6 @@ urlpatterns = [
     path("async/", async_view, name='async'),
     path("sync/", sync_view, name='sync'),
     path("myapi/", myapi, name="myapi"),
-    path("myapi_io/", myapi_io, name="myapi_io"),
+    path("http/", myapi_io, name="http"),
     path("", index, name='health'),
 ]
