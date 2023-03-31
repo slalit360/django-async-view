@@ -21,8 +21,8 @@ from hello_async.views import index, async_view, sync_view, translate
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("async/", async_view),
-    path("sync/", sync_view),
-    path("myapi/", translate),
-    path("", index),
+    path("async/", async_view, name='async'),
+    path("sync/", sync_view, name='sync'),
+    path("myapi/", translate, name="myapi"),
+    path("", index, name='health'),
 ]

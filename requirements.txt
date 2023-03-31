@@ -1,4 +1,11 @@
 django
+django-request-id
 uvicorn
 httpx
+
+#pytest requirements
 pytest
+pytest-aiohttp
+pytest-asyncio
+pytest-trio
+pytest-tornasync
