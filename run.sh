@@ -1,0 +1,1 @@
+uvicorn hello_async.asgi:application --reload
