@@ -67,6 +67,12 @@ async def async_helper():
     print("Exiting coroutine!")
 
 
+# custom done callback function
+def callback(task):
+    # report a message
+    print('Task is done')
+
+
 async def translate(request: ASGIRequest):
     logger.info(req_id)
     loop = asyncio.get_event_loop()  # each thread got its own event loop
@@ -75,7 +81,8 @@ async def translate(request: ASGIRequest):
         # async_helper_converted = sync_to_async(sync_helper, thread_sensitive=False)
         # await loop.create_task(async_helper_converted())
         #       OR
-        loop.create_task(async_helper())
+        task = loop.create_task(async_helper())
+        task.add_done_callback(callback)
         return HttpResponse(f"{request.method.upper()} -> Health is okay")
 
     return HttpResponse("status=500")
